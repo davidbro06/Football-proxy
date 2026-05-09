@@ -1,19 +1,34 @@
 export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET");
+  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "*");
 
-  const path = req.query.path;
-  const params = { ...req.query };
-  delete params.path;
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
 
-  const queryString = new URLSearchParams(params).toString();
-  const url = `https://v3.football.api-sports.io/${path}?${queryString}`;
+  try {
+    const { path, ...params } = req.query;
 
-  const response = await fetch(url, {
-    headers: { "x-apisports-key": "5da71f696f2baa3867a5756bac83a0c0" }
-  });
+    if (!path) {
+      return res.status(400).json({ error: "path parameter required" });
+    }
 
-  const data = await response.json();
-  res.status(200).json(data);
+    const queryString = new URLSearchParams(params).toString();
+    const url = `https://v3.football.api-sports.io/${path}${queryString ? "?" + queryString : ""}`;
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "x-apisports-key": "5da71f696f2baa3867a5756bac83a0c0",
+        "Content-Type": "application/json",
+      },
+    });
+
+    const data = await response.json();
+    return res.status(200).json(data);
+
+  } catch (error) {
+    return res.status(500).json({ error: error.message });
+  }
 }
