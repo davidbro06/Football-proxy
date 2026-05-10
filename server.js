@@ -7,23 +7,19 @@ app.use((req,res,next)=>{
   next();
 });
 
-app.get("/api/football", async (req, res) => {
+app.get("/api/football/*", async (req, res) => {
   try {
-    const { path, ...params } = req.query;
+    const path = req.params[0];
+    const params = {...req.query};
     const qs = new URLSearchParams(params).toString();
-    const decodedPath = decodeURIComponent(path);
-    const url = `https://api.football-data.org/v4/${decodedPath}${qs ? "?" + qs : ""}`;
-    console.log("Fetching:", url);
+    const url = `https://api.football-data.org/v4/${path}${qs ? "?" + qs : ""}`;
+    console.log("URL:", url);
     const r = await fetch(url, {
-      headers: { 
-        "X-Auth-Token": "04c70715613e4222b561202421299a42",
-        "Content-Type": "application/json"
-      }
+      headers: { "X-Auth-Token": "04c70715613e4222b561202421299a42" }
     });
     const data = await r.json();
     res.json(data);
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
